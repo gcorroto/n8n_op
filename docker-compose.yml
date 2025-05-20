@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=chatbot.midominio.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://chatbot.midominio.com/
+      - NODE_ENV=production
+      - EXECUTIONS_PROCESS=main
+      - GENERIC_TIMEZONE=Europe/Madrid
+    volumes:
+      - ./n8n/.n8n:/home/node/.n8n
