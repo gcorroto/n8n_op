@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=tu-email@dominio.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    environment:
+      - N8N_HOST=chatbot.midominio.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://chatbot.midominio.com/
+      - NODE_ENV=production
+      - EXECUTIONS_PROCESS=main
+      - GENERIC_TIMEZONE=Europe/Madrid
+    volumes:
+      - ./n8n/.n8n:/home/node/.n8n
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`chatbot.midominio.com`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
+    networks:
+      - web
+
+networks:
+  web:
+    external: false
